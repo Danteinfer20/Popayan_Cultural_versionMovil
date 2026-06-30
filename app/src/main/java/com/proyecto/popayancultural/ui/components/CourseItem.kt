@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -18,69 +19,73 @@ import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 
 @Composable
-fun ArtCard(
-    nombre: String,
-    categoria: String,
-    maestro: String,
-    urlImagen: String,
+fun CourseItemCard(
+    title: String,
+    duration: String,
+    level: String,
+    imageUrl: String,
+    isSpecialty: Boolean = false,
     onClick: () -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
-            .width(260.dp) // Diseño ancho y panorámico como en tu captura
+            .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF0A0A0C))
             .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
             .clickable { onClick() }
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Imagen superior limpia (Sin etiquetas invasivas encima)
+        // Miniatura
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
+                .size(64.dp)
+                .clip(RoundedCornerShape(12.dp))
                 .background(Color(0xFF111113))
         ) {
             SubcomposeAsyncImage(
-                model = urlImagen,
-                contentDescription = nombre,
+                model = imageUrl,
+                contentDescription = title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
                 loading = { Box(Modifier.fillMaxSize().background(Color(0xFF111113))) },
                 error = { Box(Modifier.fillMaxSize().background(Color(0xFF111113))) }
             )
+
+            // Badge minimalista
+            if (isSpecialty) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .background(Color(0xFFF59E0B), RoundedCornerShape(topStart = 12.dp, bottomEnd = 8.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text("ESPECIALIDAD", color = Color.Black, fontSize = 7.sp, fontWeight = FontWeight.Black)
+                }
+            }
         }
 
-        // Bloque de metadatos (Espaciado matemático)
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = categoria.uppercase(),
-                color = Color(0xFFF59E0B), // Acento Ámbar/Dorado
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 1.5.sp
-            )
+        Spacer(modifier = Modifier.width(16.dp))
 
-            Spacer(modifier = Modifier.height(4.dp))
-
+        // Textos y Metadata
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = nombre,
+                text = title,
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            Text(
-                text = "Maestro $maestro",
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = duration, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                Text(text = "  •  ", color = Color.White.copy(alpha = 0.3f), fontSize = 11.sp)
+                Text(text = level, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+            }
         }
     }
 }

@@ -33,7 +33,7 @@ import com.proyecto.popayancultural.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// --- MODELO CON DESCRIPCIÓN Y COMENTARIOS SIMULADOS ---
+// --- MODEL WITH DESCRIPTION AND SIMULATED COMMENTS ---
 data class GalleryPost(
     val id: Int,
     val imageUrl: String,
@@ -53,42 +53,42 @@ fun GalleryScreen() {
     var showDetail by remember { mutableStateOf(false) }
     var selectedPost by remember { mutableStateOf<GalleryPost?>(null) }
 
-    val tagsDB = listOf("Todos", "Semana Santa", "Arquitectura", "Artesanía", "Vida Local")
-    var tagActive by remember { mutableStateOf("Todos") }
+    val tagsDB = listOf("All", "Holy Week", "Architecture", "Crafts", "Local Life")
+    var tagActive by remember { mutableStateOf("All") }
 
-    val descBase = "Una pieza que captura la esencia inquebrantable del Cauca. Sus texturas y sombras revelan años de tradición conservada intacta ante el paso del tiempo."
-    val comentariosMuestra = listOf(
-        Pair("Ana P.", "Increíble cómo capturaste esa luz."),
-        Pair("Carlos G.", "Me recuerda a mi infancia en el centro."),
-        Pair("Luz M.", "Una obra digna de exposición nacional.")
+    val baseDesc = "A piece that captures the unshakable essence of Cauca. Its textures and shadows reveal years of preserved tradition standing firm against the passage of time."
+    val sampleComments = listOf(
+        Pair("Ana P.", "Amazing how you captured that light."),
+        Pair("Carlos G.", "Reminds me of my childhood downtown."),
+        Pair("Luz M.", "A work worthy of a national exhibition.")
     )
 
     val dbPosts = remember {
         listOf(
-            GalleryPost(1, "https://i.pinimg.com/1200x/17/d6/9f/17d69f8fae014ee87261ecb20a4702c2.jpg", "Semana Santa", "Maestro Solarte", descBase, 124, 12, true, comentariosMuestra),
-            GalleryPost(2, "https://i.pinimg.com/736x/48/b1/9c/48b19cbac47db10be6e71d1fe4849b9a.jpg", "Arquitectura", "Ana López", "Fachadas que guardan el eco de siglos pasados.", 89, 4, false, comentariosMuestra.take(1)),
-            GalleryPost(3, "https://i.pinimg.com/1200x/0f/41/9c/0f419c38373d6a579e7dfeb8fe09cfb1.jpg", "Artesanía", "Taller Chamba", "El barro hecho poesía. Trabajo manual de más de 40 horas.", 342, 45, true, comentariosMuestra),
-            GalleryPost(4, "https://i.pinimg.com/736x/a0/40/9d/a0409d3b3de331b2c4c45cb2943db8ec.jpg", "Arquitectura", "Carlos Ruiz", descBase, 56, 2),
-            GalleryPost(5, "https://i.pinimg.com/1200x/f0/e4/ab/f0e4abce10532cb8fd7943db5ff2bd40.jpg", "Semana Santa", "Cofradía", "El silencio absoluto de la noche procesional.", 210, 18, false, comentariosMuestra.take(2)),
-            GalleryPost(6, "https://i.pinimg.com/1200x/bd/c9/91/bdc99164ee0dd710585ddc73cf2308b2.jpg", "Vida Local", "Foto Popayán", descBase, 15, 0),
-            GalleryPost(7, "https://i.pinimg.com/736x/1c/40/d0/1c40d04ec412ee8b7269fd16e9462b96.jpg", "Arquitectura", "Ana López", descBase, 430, 67, true, comentariosMuestra),
-            GalleryPost(8, "https://i.pinimg.com/1200x/61/29/2f/61292f01e939938b2b0103115100295e.jpg", "Artesanía", "Maestro Solarte", "Filigrana que imita la naturaleza del macizo.", 112, 5, false, comentariosMuestra.take(1)),
-            GalleryPost(9, "https://i.pinimg.com/1200x/02/c7/9e/02c79ea838bd9506a93beff15f95ed7a.jpg", "Semana Santa", "Archivo Histórico", descBase, 500, 120, false, comentariosMuestra),
-            GalleryPost(10, "https://i.pinimg.com/736x/c7/64/1d/c7641d938201e25293d85cd9f93d2cb4.jpg", "Arquitectura", "Carlos Ruiz", descBase, 88, 3),
-            GalleryPost(11, "https://i.pinimg.com/1200x/a3/73/8c/a3738c1cfba8c83c3a92ed67aeb5119e.jpg", "Artesanía", "Taller Chamba", descBase, 25, 1),
-            GalleryPost(12, "https://i.pinimg.com/1200x/09/e7/6b/09e76b993810b9ed224dc945184616c1.jpg", "Vida Local", "Foto Popayán", descBase, 67, 8, true),
-            GalleryPost(13, "https://i.pinimg.com/736x/8b/3b/59/8b3b5933e3ff1f0220dafcaaac71a834.jpg", "Arquitectura", "Ana López", descBase, 32, 0),
-            GalleryPost(14, "https://i.pinimg.com/1200x/ee/9f/7f/ee9f7fb6e91ac7f5952dce61fed8840f.jpg", "Semana Santa", "Cofradía", descBase, 190, 22, false, comentariosMuestra),
-            GalleryPost(15, "https://i.pinimg.com/736x/9d/6a/11/9d6a11059dc7d6b30f6bb991f6018c2d.jpg", "Vida Local", "Foto Popayán", descBase, 45, 2),
-            GalleryPost(16, "https://i.pinimg.com/1200x/ae/33/c3/ae33c3125a84013394a19b8b500dd19a.jpg", "Artesanía", "Maestro Solarte", descBase, 78, 4),
-            GalleryPost(17, "https://i.pinimg.com/1200x/9c/a2/b8/9ca2b82a285189bd28f0d4ee8fdabdd5.jpg", "Arquitectura", "Carlos Ruiz", descBase, 150, 15, true, comentariosMuestra.take(2)),
-            GalleryPost(18, "https://i.pinimg.com/1200x/d5/6d/84/d56d84c8cfa1bec6cfdae6f2035757bf.jpg", "Semana Santa", "Archivo Histórico", descBase, 340, 50),
-            GalleryPost(19, "https://i.pinimg.com/736x/11/1d/2c/111d2cb145cd0349a272b423f59d255a.jpg", "Vida Local", "Ana López", descBase, 21, 1),
-            GalleryPost(20, "https://i.pinimg.com/1200x/37/38/25/37382553cfd6220c0fd840b2284f1c23.jpg", "Artesanía", "Taller Chamba", descBase, 99, 9)
+            GalleryPost(1, "https://i.pinimg.com/1200x/17/d6/9f/17d69f8fae014ee87261ecb20a4702c2.jpg", "Holy Week", "Maestro Solarte", baseDesc, 124, 12, true, sampleComments),
+            GalleryPost(2, "https://i.pinimg.com/736x/48/b1/9c/48b19cbac47db10be6e71d1fe4849b9a.jpg", "Architecture", "Ana López", "Facades that hold the echo of centuries past.", 89, 4, false, sampleComments.take(1)),
+            GalleryPost(3, "https://i.pinimg.com/1200x/0f/41/9c/0f419c38373d6a579e7dfeb8fe09cfb1.jpg", "Crafts", "Taller Chamba", "Clay made into poetry. Manual work of more than 40 hours.", 342, 45, true, sampleComments),
+            GalleryPost(4, "https://i.pinimg.com/736x/a0/40/9d/a0409d3b3de331b2c4c45cb2943db8ec.jpg", "Architecture", "Carlos Ruiz", baseDesc, 56, 2),
+            GalleryPost(5, "https://i.pinimg.com/1200x/f0/e4/ab/f0e4abce10532cb8fd7943db5ff2bd40.jpg", "Holy Week", "Cofradía", "The absolute silence of the procession night.", 210, 18, false, sampleComments.take(2)),
+            GalleryPost(6, "https://i.pinimg.com/1200x/bd/c9/91/bdc99164ee0dd710585ddc73cf2308b2.jpg", "Local Life", "Foto Popayán", baseDesc, 15, 0),
+            GalleryPost(7, "https://i.pinimg.com/736x/1c/40/d0/1c40d04ec412ee8b7269fd16e9462b96.jpg", "Architecture", "Ana López", baseDesc, 430, 67, true, sampleComments),
+            GalleryPost(8, "https://i.pinimg.com/1200x/61/29/2f/61292f01e939938b2b0103115100295e.jpg", "Crafts", "Maestro Solarte", "Filigree that imitates the nature of the highlands.", 112, 5, false, sampleComments.take(1)),
+            GalleryPost(9, "https://i.pinimg.com/1200x/02/c7/9e/02c79ea838bd9506a93beff15f95ed7a.jpg", "Holy Week", "Historical Archive", baseDesc, 500, 120, false, sampleComments),
+            GalleryPost(10, "https://i.pinimg.com/736x/c7/64/1d/c7641d938201e25293d85cd9f93d2cb4.jpg", "Architecture", "Carlos Ruiz", baseDesc, 88, 3),
+            GalleryPost(11, "https://i.pinimg.com/1200x/a3/73/8c/a3738c1cfba8c83c3a92ed67aeb5119e.jpg", "Crafts", "Taller Chamba", baseDesc, 25, 1),
+            GalleryPost(12, "https://i.pinimg.com/1200x/09/e7/6b/09e76b993810b9ed224dc945184616c1.jpg", "Local Life", "Foto Popayán", baseDesc, 67, 8, true),
+            GalleryPost(13, "https://i.pinimg.com/736x/8b/3b/59/8b3b5933e3ff1f0220dafcaaac71a834.jpg", "Architecture", "Ana López", baseDesc, 32, 0),
+            GalleryPost(14, "https://i.pinimg.com/1200x/ee/9f/7f/ee9f7fb6e91ac7f5952dce61fed8840f.jpg", "Holy Week", "Cofradía", baseDesc, 190, 22, false, sampleComments),
+            GalleryPost(15, "https://i.pinimg.com/736x/9d/6a/11/9d6a11059dc7d6b30f6bb991f6018c2d.jpg", "Local Life", "Foto Popayán", baseDesc, 45, 2),
+            GalleryPost(16, "https://i.pinimg.com/1200x/ae/33/c3/ae33c3125a84013394a19b8b500dd19a.jpg", "Crafts", "Maestro Solarte", baseDesc, 78, 4),
+            GalleryPost(17, "https://i.pinimg.com/1200x/9c/a2/b8/9ca2b82a285189bd28f0d4ee8fdabdd5.jpg", "Architecture", "Carlos Ruiz", baseDesc, 150, 15, true, sampleComments.take(2)),
+            GalleryPost(18, "https://i.pinimg.com/1200x/d5/6d/84/d56d84c8cfa1bec6cfdae6f2035757bf.jpg", "Holy Week", "Historical Archive", baseDesc, 340, 50),
+            GalleryPost(19, "https://i.pinimg.com/736x/11/1d/2c/111d2cb145cd0349a272b423f59d255a.jpg", "Local Life", "Ana López", baseDesc, 21, 1),
+            GalleryPost(20, "https://i.pinimg.com/1200x/37/38/25/37382553cfd6220c0fd840b2284f1c23.jpg", "Crafts", "Taller Chamba", baseDesc, 99, 9)
         )
     }
 
-    val postsFiltrados = if (tagActive == "Todos") dbPosts else dbPosts.filter { it.category == tagActive }
+    val filteredPosts = if (tagActive == "All") dbPosts else dbPosts.filter { it.category == tagActive }
 
     Box(modifier = Modifier.fillMaxSize().background(BackgroundDeep)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -102,13 +102,13 @@ fun GalleryScreen() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("ARCHIVO PATRIMONIAL", color = VioletAcento, style = MaterialTheme.typography.labelSmall, letterSpacing = 3.sp)
-                    Text("GALERÍA", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Black, letterSpacing = (-2).sp)
+                    Text("HERITAGE ARCHIVE", color = VioletAcento, style = MaterialTheme.typography.labelSmall, letterSpacing = 3.sp)
+                    Text("GALLERY", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Black, letterSpacing = (-2).sp)
                 }
-                Text("${postsFiltrados.size} OBRAS", color = Color.White.copy(0.4f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("${filteredPosts.size} WORKS", color = Color.White.copy(0.4f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
 
-            // --- FILTROS ---
+            // --- FILTERS ---
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -132,7 +132,7 @@ fun GalleryScreen() {
                 }
             }
 
-            // --- GRILLA ---
+            // --- GRID ---
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
@@ -140,7 +140,7 @@ fun GalleryScreen() {
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalItemSpacing = 14.dp
             ) {
-                itemsIndexed(postsFiltrados, key = { _, post -> post.id }) { index, post ->
+                itemsIndexed(filteredPosts, key = { _, post -> post.id }) { index, post ->
                     GlassGalleryCard(post = post, index = index) {
                         selectedPost = post
                         showDetail = true
@@ -149,7 +149,7 @@ fun GalleryScreen() {
             }
         }
 
-        // --- BOTTOM SHEET INTERACTIVO ---
+        // --- INTERACTIVE BOTTOM SHEET ---
         if (showDetail && selectedPost != null) {
             ModalBottomSheet(
                 onDismissRequest = { showDetail = false },
@@ -163,7 +163,7 @@ fun GalleryScreen() {
     }
 }
 
-// --- CARD: "POLAROID GLASSMÓRFICA" ---
+// --- "POLAROID GLASSMORPHIC" CARD ---
 @Composable
 fun GlassGalleryCard(post: GalleryPost, index: Int, onClick: () -> Unit) {
     var isPressed by remember { mutableStateOf(false) }
@@ -216,7 +216,7 @@ fun GlassGalleryCard(post: GalleryPost, index: Int, onClick: () -> Unit) {
 
             if (post.isAiRecommended) {
                 Box(modifier = Modifier.align(Alignment.TopStart).padding(12.dp).background(VioletAcento, RoundedCornerShape(6.dp))) {
-                    Text("★ PARA TI", modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Black)
+                    Text("★ FOR YOU", modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp), color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Black)
                 }
             }
 
@@ -252,13 +252,12 @@ fun GlassGalleryCard(post: GalleryPost, index: Int, onClick: () -> Unit) {
     }
 }
 
-// --- DETALLE: IMPLEMENTACIÓN DE PESTAÑAS (TABS) ---
+// --- DETAIL: TABS IMPLEMENTATION ---
 @Composable
 fun PostDetailSheet(post: GalleryPost) {
     var isSaved by remember { mutableStateOf(false) }
-    var currentTab by remember { mutableStateOf(0) } // 0 = Relato, 1 = Comunidad
+    var currentTab by remember { mutableStateOf(0) } // 0 = Visual Story, 1 = Community
 
-    // Agregamos verticalScroll para que funcione si el contenido es largo
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -266,7 +265,7 @@ fun PostDetailSheet(post: GalleryPost) {
             .padding(horizontal = 24.dp)
             .padding(bottom = 40.dp)
     ) {
-        // IMAGEN DESTACADA
+        // FEATURED IMAGE
         Box(modifier = Modifier.fillMaxWidth().height(350.dp).clip(RoundedCornerShape(30.dp))) {
             AsyncImage(
                 model = post.imageUrl,
@@ -285,21 +284,21 @@ fun PostDetailSheet(post: GalleryPost) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // ACCIONES
+        // ACTIONS
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-            ActionIconButton(Icons.Default.FavoriteBorder, "Inspirar", Color.White) {}
+            ActionIconButton(Icons.Default.FavoriteBorder, "Inspire", Color.White) {}
             ActionIconButton(Icons.Default.Refresh, "Repost", Color.White) {}
             ActionIconButton(
                 if (isSaved) Icons.Default.Star else Icons.Default.StarBorder,
-                if (isSaved) "Guardado" else "Guardar",
+                if (isSaved) "Saved" else "Save",
                 if (isSaved) VioletAcento else Color.White
             ) { isSaved = !isSaved }
-            ActionIconButton(Icons.Default.Share, "Compartir", Color.White) {}
+            ActionIconButton(Icons.Default.Share, "Share", Color.White) {}
         }
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // --- SISTEMA DE PESTAÑAS (DESPLAZABLE INTERNO) ---
+        // --- TABS SYSTEM ---
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -307,13 +306,13 @@ fun PostDetailSheet(post: GalleryPost) {
                 .padding(4.dp)
         ) {
             CustomTab(
-                title = "RELATO VISUAL",
+                title = "VISUAL STORY",
                 isSelected = currentTab == 0,
                 modifier = Modifier.weight(1f)
             ) { currentTab = 0 }
 
             CustomTab(
-                title = "COMUNIDAD (${post.commentsCount})",
+                title = "COMMUNITY (${post.commentsCount})",
                 isSelected = currentTab == 1,
                 modifier = Modifier.weight(1f)
             ) { currentTab = 1 }
@@ -321,7 +320,7 @@ fun PostDetailSheet(post: GalleryPost) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- CONTENIDO DINÁMICO SEGÚN LA PESTAÑA ---
+        // --- DYNAMIC CONTENT ACCORDING TO TAB ---
         AnimatedContent(
             targetState = currentTab,
             transitionSpec = {
@@ -330,9 +329,9 @@ fun PostDetailSheet(post: GalleryPost) {
             label = "TabContent"
         ) { targetTab ->
             if (targetTab == 0) {
-                // VISTA: RELATO
+                // VIEW: VISUAL STORY
                 Column {
-                    Text("AUTOR: ${post.authorName.uppercase()}", color = VioletAcento, style = MaterialTheme.typography.labelSmall, letterSpacing = 2.sp)
+                    Text("AUTHOR: ${post.authorName.uppercase()}", color = VioletAcento, style = MaterialTheme.typography.labelSmall, letterSpacing = 2.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         post.description,
@@ -342,17 +341,17 @@ fun PostDetailSheet(post: GalleryPost) {
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        "Impacto: ${post.likesCount} inspiraciones generadas.",
+                        "Impact: ${post.likesCount} inspirations generated.",
                         color = Color.White.copy(alpha = 0.5f),
                         fontSize = 13.sp,
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                     )
                 }
             } else {
-                // VISTA: COMUNIDAD (COMENTARIOS)
+                // VIEW: COMMUNITY (COMMENTS)
                 Column {
                     if (post.topComments.isNotEmpty()) {
-                        post.topComments.forEach { (usuario, comentario) ->
+                        post.topComments.forEach { (user, comment) ->
                             Surface(
                                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                                 color = Color.Transparent,
@@ -360,24 +359,24 @@ fun PostDetailSheet(post: GalleryPost) {
                                 border = BorderStroke(1.dp, Color.White.copy(0.1f))
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(usuario, color = VioletAcento, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(user, color = VioletAcento, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(comentario, color = Color.White.copy(0.7f), fontSize = 14.sp)
+                                    Text(comment, color = Color.White.copy(0.7f), fontSize = 14.sp)
                                 }
                             }
                         }
                     } else {
-                        Text("Aún no hay comentarios. Sé el primero en opinar.", color = Color.Gray, fontSize = 14.sp)
+                        Text("No comments yet. Be the first to share your thoughts.", color = Color.Gray, fontSize = 14.sp)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Input de comentario falso
+                    // Fake comment input
                     OutlinedTextField(
                         value = "",
                         onValueChange = {},
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Escribe un comentario...", color = Color.Gray, fontSize = 14.sp) },
+                        placeholder = { Text("Write a comment...", color = Color.Gray, fontSize = 14.sp) },
                         shape = RoundedCornerShape(20.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.White.copy(0.1f),
@@ -391,7 +390,7 @@ fun PostDetailSheet(post: GalleryPost) {
     }
 }
 
-// Botón de Pestaña Personalizado
+// Custom Tab Button
 @Composable
 fun CustomTab(title: String, isSelected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(

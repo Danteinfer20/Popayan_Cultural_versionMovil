@@ -57,7 +57,31 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // UI
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.compose.material3:material3:1.2.1")
+
+    // video
+
+    // Cambia esto:
+    implementation("androidx.media3:media3-exoplayer:1.x.x")
+    implementation("androidx.media3:media3-ui:1.x.x")
+
+// Por esto:
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
+    // QR
+    implementation("io.github.g0dkar:qrcode-kotlin:4.1.1")
+
+
+    // Mapa
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

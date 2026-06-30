@@ -1,221 +1,548 @@
 package com.proyecto.popayancultural.ui.screens
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.SubcomposeAsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.proyecto.popayancultural.ui.components.ArtCard
-import com.proyecto.popayancultural.ui.theme.*
-import kotlinx.coroutines.delay
+import com.proyecto.popayancultural.data.models.*
+import com.proyecto.popayancultural.ui.HomeViewModel
+import com.proyecto.popayancultural.ui.components.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+private val BgBase        = Color(0xFF080808)
+private val BgCard        = Color(0xFF111115)
+private val BgCardBorder  = Color(0xFF2A2A35)
+private val Violet        = Color(0xFFA855F7)
+private val VioletDark    = Color(0xFF7C3AED)
+private val TextPrimary   = Color(0xFFF0F0F0)
+private val TextSecondary = Color(0xFF888888)
+private val TextMuted     = Color(0xFF555555)
+
+private val ShapeCard   = RoundedCornerShape(12.dp)
+private val ShapeAvatar = CircleShape
+private val ShapeChip   = RoundedCornerShape(20.dp)
+
+// Dimensiones de imagen — fijas, el texto fluye libre debajo
+private val CARD_OBRA_WIDTH      = 120.dp
+private val CARD_OBRA_IMAGE_H    = 90.dp
+
+private val CARD_PRODUCT_WIDTH   = 130.dp
+private val CARD_PRODUCT_IMAGE_H = 100.dp
+
+private val CARD_COURSE_IMAGE    = 48.dp
+private val AVATAR_SIZE          = 50.dp
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
-fun HomeScreen() {
-    val sheetState = rememberModalBottomSheetState()
-    var showBottomSheet by remember { mutableStateOf(false) }
-    var selectedItem by remember { mutableStateOf<CulturalItem?>(null) }
+fun editableImageRequest(url: String?): ImageRequest {
+    val context = LocalContext.current
+    return ImageRequest.Builder(context)
+        .data(url)
+        .memoryCachePolicy(CachePolicy.DISABLED)
+        .diskCachePolicy(CachePolicy.DISABLED)
+        .crossfade(true)
+        .build()
+}
 
-    // --- BASE DE DATOS MAESTRA (CONSERVADA ÍNTEGRA) ---
-    val datosHome = remember {
-        listOf(
-            // ARTISTAS
-            CulturalItem(1, "Maestro Alfarero", "Barro Negro", "https://i.pinimg.com/1200x/0f/41/9c/0f419c38373d6a579e7dfeb8fe09cfb1.jpg", "Técnicas ancestrales de moldeo a mano.", "ARTISTA"),
-            CulturalItem(2, "Tejedora Misak", "Telar de Guanga", "https://i.pinimg.com/1200x/2e/dd/0e/2edd0e8d5aaac71c6dedacbdd033ce15.jpg", "Herencia textil en cada hilo de lana virgen.", "ARTISTA"),
-            CulturalItem(3, "Talla en Cedro", "Imaginería", "https://i.pinimg.com/736x/a1/19/15/a1191589a4ed6a01bc7cd3c8e24c3af7.jpg", "Escultura sacra con acabados en policromía.", "ARTISTA"),
-            CulturalItem(4, "Filigrana Caucana", "Orfebrería", "https://i.pinimg.com/1200x/61/29/2f/61292f01e939938b2b0103115100295e.jpg", "Hilos de plata convertidos en joyas eternas.", "ARTISTA"),
-            CulturalItem(5, "Pintura Colonial", "Artes Plásticas", "https://i.pinimg.com/1200x/9f/c3/c7/9fc3c769083ab4010f852953616f1fb8.jpg", "Óleos inspirados en los rincones de la Ciudad Blanca.", "ARTISTA"),
-            CulturalItem(6, "Cestería de Iraca", "Tejido Natural", "https://i.pinimg.com/736x/3f/67/a2/3f67a21632c51b410e14983164ef2514.jpg", "Fibra vegetal transformada en canastos y accesorios.", "ARTISTA"),
-            CulturalItem(7, "Talabartería", "Trabajo en Cuero", "https://i.pinimg.com/1200x/1b/24/2d/1b242df2db57f6378ee3cfadfbcc2704.jpg", "Repujado artesanal con diseños de época.", "ARTISTA"),
-            CulturalItem(8, "Maestra Cerámica", "Técnica Chamba", "https://i.pinimg.com/1200x/a3/73/8c/a3738c1cfba8c83c3a92ed67aeb5119e.jpg", "Guardiana del secreto del barro vidriado.", "ARTISTA"),
+@Composable
+fun staticImageRequest(url: String?): ImageRequest {
+    val context = LocalContext.current
+    return ImageRequest.Builder(context)
+        .data(url)
+        .crossfade(true)
+        .build()
+}
 
-            // PRODUCTOS (POP STORE)
-            CulturalItem(9, "Mochila Ancestral", "$180k", "https://i.pinimg.com/736x/c4/d5/c0/c4d5c07c95d3ee4960f7fd1ba42a87ef.jpg", "Mochila tejida con simbología caucana.", "PRODUCTO"),
-            CulturalItem(10, "Cuenco Rústico", "$45k", "https://i.pinimg.com/474x/99/ca/9b/99ca9bf1f08c3820cb2e4950a66af20d.jpg", "Barro natural ideal para decoración.", "PRODUCTO"),
-            CulturalItem(11, "Vaso de Autor", "$35k", "https://i.pinimg.com/736x/fa/d3/01/fad301b0ba5a28bd9b022e1e384d5a82.jpg", "Diseño contemporáneo con alma artesanal.", "PRODUCTO"),
-            CulturalItem(12, "Poncho de Lana", "$210k", "https://i.pinimg.com/736x/aa/5d/2f/aa5d2f7e0203d8a3da5d7766e01860f2.jpg", "Tejido térmico de alta durabilidad.", "PRODUCTO"),
-            CulturalItem(13, "Plato de Colección", "$55k", "https://i.pinimg.com/736x/c3/b9/b5/c3b9b557711a61893fb5d8cb8cfab034.jpg", "Pintura manual sobre cerámica blanca.", "PRODUCTO"),
-            CulturalItem(14, "Dije Filigrana", "$120k", "https://i.pinimg.com/1200x/6d/37/77/6d3777925fb4155292308aee1cdb34ca.jpg", "Plata pura en técnica de filigrana.", "PRODUCTO"),
-            CulturalItem(15, "Individuales", "$65k", "https://i.pinimg.com/1200x/a1/34/ee/a134ee0af4bedce028a6523fbf93b92a.jpg", "Tejidos en fibra de palma natural.", "PRODUCTO"),
-            CulturalItem(16, "Escultura Mini", "$80k", "https://i.pinimg.com/1200x/ae/33/c3/ae33c3125a84013394a19b8b500dd19a.jpg", "Talla pequeña para espacios modernos.", "PRODUCTO"),
+private fun safeDay(dateStr: String?): String = runCatching {
+    dateStr?.take(10)?.substring(8, 10) ?: "--"
+}.getOrDefault("--")
 
-            // EVENTOS & EDUCACIÓN
-            CulturalItem(17, "Procesión Sacra", "Tradición", "https://i.pinimg.com/1200x/02/c7/9e/02c79ea838bd9506a93beff15f95ed7a.jpg", "Vivencia única de la Semana Santa payanesa.", "EVENTO"),
-            CulturalItem(18, "Noche de Museos", "Cultura", "https://i.pinimg.com/1200x/09/e7/6b/09e76b993810b9ed224dc945184616c1.jpg", "Puertas abiertas a la historia de la ciudad.", "EVENTO"),
-            CulturalItem(19, "Gastronomía", "Sabor", "https://i.pinimg.com/736x/8b/3b/59/8b3b5933e3ff1f0220dafcaaac71a834.jpg", "Degustación de pipián y carantanta.", "EVENTO"),
-            CulturalItem(20, "Puente Humilladero", "Historia", "https://i.pinimg.com/1200x/bd/c9/91/bdc99164ee0dd710585ddc73cf2308b2.jpg", "Recorrido guiado por el ícono de Popayán.", "EVENTO"),
-            CulturalItem(21, "Música Sacra", "Concierto", "https://i.pinimg.com/736x/a7/a9/9c/a7a99caccdb3ed0d620a53084d7991d5.jpg", "Melodías barrocas en las iglesias blancas.", "EVENTO"),
-            CulturalItem(22, "Taller de Barro", "Edu", "https://i.pinimg.com/1200x/ee/9f/7f/ee9f7fb6e91ac7f5952dce61fed8840f.jpg", "Clase magistral de modelado tradicional.", "EDUCACION"),
-            CulturalItem(23, "Danza Andina", "Evento", "https://i.pinimg.com/736x/9d/6a/11/9d6a11059dc7d6b30f6bb991f6018c2d.jpg", "Presentación de grupos folclóricos regionales.", "EVENTO"),
-            CulturalItem(24, "Cine al Parque", "Evento", "https://i.pinimg.com/1200x/9c/a2/b8/9ca2b82a285189bd28f0d4ee8fdabdd5.jpg", "Cine bajo las estrellas del sector histórico.", "EVENTO")
-        )
+private fun safeMonth(dateStr: String?): String = runCatching {
+    dateStr?.take(10)?.substring(5, 7) ?: "--"
+}.getOrDefault("--")
+
+private fun safeTime(dateStr: String?, timeStr: String?): String {
+    if (dateStr != null && dateStr.contains("T")) {
+        return runCatching { dateStr.substring(11, 16) }.getOrDefault("")
     }
+    return timeStr?.take(5).orEmpty()
+}
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundDeep)) {
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun HomeScreen(
+    viewModel      : HomeViewModel    = viewModel(),
+    onEventClick   : (Int) -> Unit    = {},
+    onObraClick    : (String) -> Unit = {},
+    onProductClick : (Int) -> Unit    = {},
+    onArtistaClick : (String) -> Unit = {},
+    onEducaClick   : (Int) -> Unit    = {}
+) {
+    val isLoading by viewModel.isLoading.collectAsState()
+    val eventos   by viewModel.eventos.collectAsState()
+    val obras     by viewModel.obras.collectAsState()
+    val productos by viewModel.productos.collectAsState()
+    val educacion by viewModel.educacion.collectAsState()
+    val artistas  by viewModel.artistas.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize().background(BgBase)) {
+        if (isLoading) {
+            CircularProgressIndicator(color = Violet, modifier = Modifier.align(Alignment.Center))
+        } else {
+            LazyColumn(
+                modifier       = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 100.dp)
+            ) {
+
+                // ── HERO ──────────────────────────────────────────────────────
+                item {
+                    if (eventos.isNotEmpty()) {
+                        val pagerState = rememberPagerState { eventos.size }
+                        Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
+                            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                                val ev = eventos[page]
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clickable { onEventClick(ev.id) }
+                                ) {
+                                    SubcomposeAsyncImage(
+                                        model              = editableImageRequest(ev.coverImage),
+                                        contentDescription = null,
+                                        modifier           = Modifier.fillMaxSize(),
+                                        contentScale       = ContentScale.Crop
+                                    )
+                                    Box(
+                                        modifier = Modifier.fillMaxSize().background(
+                                            Brush.verticalGradient(
+                                                0f   to Color.Transparent,
+                                                0.5f to Color(0x40000000),
+                                                1f   to BgBase
+                                            )
+                                        )
+                                    )
+                                    Column(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomStart)
+                                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    ) {
+                                        Text(
+                                            "EVENTO DESTACADO",
+                                            color         = Violet,
+                                            fontSize      = 8.sp,
+                                            fontWeight    = FontWeight.Black,
+                                            letterSpacing = 2.sp
+                                        )
+                                        Spacer(Modifier.height(3.dp))
+                                        Text(
+                                            ev.title.orEmpty().uppercase(),
+                                            color      = TextPrimary,
+                                            fontSize   = 17.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            lineHeight = 21.sp,
+                                            maxLines   = 2,
+                                            overflow   = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+                            Row(
+                                modifier              = Modifier.align(Alignment.BottomEnd).padding(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                repeat(eventos.size) { i ->
+                                    val isActive = pagerState.currentPage == i
+                                    Box(
+                                        modifier = Modifier
+                                            .height(5.dp)
+                                            .width(if (isActive) 14.dp else 5.dp)
+                                            .clip(RoundedCornerShape(3.dp))
+                                            .background(if (isActive) Violet else TextMuted)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── AGENDA ────────────────────────────────────────────────────
+                item {
+                    SectionHeader("Próximos eventos", "Agenda cultural", "Ver agenda")
+                    Column(
+                        modifier            = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        eventos.take(3).forEach { ev ->
+                            AgendaCard(
+                                day      = safeDay(ev.startDate),
+                                month    = safeMonth(ev.startDate),
+                                title    = ev.title.orEmpty(),
+                                location = ev.location?.name.orEmpty().ifEmpty { "Popayán" },
+                                time     = safeTime(ev.startDate, ev.startTime),
+                                onClick  = { onEventClick(ev.id) }
+                            )
+                        }
+                    }
+                }
+
+                // ── OBRAS ─────────────────────────────────────────────────────
+                item {
+                    SectionHeader("Patrimonio", "Obras maestras", "Ver galería")
+                    LazyRow(
+                        contentPadding        = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(obras) { obra ->
+                            ArtCard(
+                                title    = obra.title.orEmpty(),
+                                tag      = "Patrimonio",
+                                imageUrl = obra.imageUrl,
+                                onClick  = { obra.slug?.let { onObraClick(it) } }
+                            )
+                        }
+                    }
+                }
+
+                // ── POP STORE ─────────────────────────────────────────────────
+                item {
+                    SectionHeader("Certificado", "Pop Store", "Ver tienda")
+                    LazyRow(
+                        contentPadding        = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(productos) { prod ->
+                            CompactProductCard(prod) { onProductClick(prod.id) }
+                        }
+                    }
+                }
+
+                // ── APRENDE ───────────────────────────────────────────────────
+                item {
+                    SectionHeader("Maestros", "Aprende", "Ver cursos")
+                    Column(
+                        modifier            = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        educacion.take(3).forEach { ed ->
+                            CourseCard(
+                                title    = ed.title.orEmpty(),
+                                duration = "${ed.metadata?.estimatedReadTime ?: 15} min",
+                                level    = ed.levelLabel,
+                                imageUrl = ed.imageUrl,
+                                onClick  = { onEducaClick(ed.id) }
+                            )
+                        }
+                    }
+                }
+
+                // ── DIRECTORIO ────────────────────────────────────────────────
+                item {
+                    SectionHeader("Creadores", "Directorio", "Ver artistas")
+                    LazyRow(
+                        contentPadding        = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(artistas) { art ->
+                            ArtistAvatar(
+                                name     = art.name.orEmpty(),
+                                location = art.location.orEmpty().ifEmpty { "Popayán" },
+                                imageUrl = art.avatar,
+                                initials = art.name.orEmpty().take(2).uppercase().ifEmpty { "??" },
+                                onClick  = { onArtistaClick(art.username) }
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+// ─── Componentes privados ─────────────────────────────────────────────────────
+
+@Composable
+private fun SectionHeader(eyebrow: String, title: String, linkText: String) {
+    Row(
+        modifier              = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 10.dp),
+        verticalAlignment     = Alignment.Bottom,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Text(eyebrow.uppercase(), color = Violet, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+            Text(title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        }
+        Text(linkText, color = Violet, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun AgendaCard(
+    day: String, month: String, title: String,
+    location: String, time: String, onClick: () -> Unit
+) {
+    Row(
+        modifier              = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .clip(ShapeCard)
+            .background(BgCard)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier            = Modifier.width(28.dp)
+        ) {
+            Text(day.ifEmpty { "--" }, color = Violet, fontSize = 16.sp, fontWeight = FontWeight.Black, lineHeight = 16.sp)
+            Text(month.ifEmpty { "--" }, color = TextSecondary, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        }
+        Box(modifier = Modifier.width(1.dp).height(26.dp).background(BgCardBorder))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title.ifEmpty { "Sin título" },
+                color      = TextPrimary,
+                fontSize   = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines   = 1,
+                overflow   = TextOverflow.Ellipsis
+            )
+            Text(location.ifEmpty { "Popayán" }, color = TextSecondary, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Text(time.ifEmpty { "--:--" }, color = Violet, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+// ArtCard — imagen fija, texto fluye libre (sin Box de altura fija)
+@Composable
+private fun ArtCard(
+    title: String, tag: String, imageUrl: String?, onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(CARD_OBRA_WIDTH)
+            .clip(ShapeCard)
+            .background(BgCard)
+            .clickable(onClick = onClick)
+    ) {
+        SubcomposeAsyncImage(
+            model              = staticImageRequest(imageUrl),
+            contentDescription = null,
+            modifier           = Modifier
+                .fillMaxWidth()
+                .height(CARD_OBRA_IMAGE_H),
+            contentScale       = ContentScale.Crop,
+            loading = { Box(Modifier.fillMaxSize().background(Color(0xFF16161A))) }
+        )
+        // Zona de texto: padding fijo, el texto respira y nunca se corta
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 100.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp)
         ) {
-            CarruselPopayan()
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // 1. MAESTROS (Basado en popular_artists view)
-            SeccionLayout("Maestros del Cauca", "RAÍCES VIVAS")
-            LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(datosHome.filter { it.categoria == "ARTISTA" }) { item ->
-                    ArtCard(item.titulo, item.info, item.imagenUrl) {
-                        selectedItem = item
-                        showBottomSheet = true
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // 2. POP STORE (Basado en products table)
-            SeccionLayout("Pop Store", "LO NUESTRO", mostrarVerTodo = true)
-            LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(datosHome.filter { it.categoria == "PRODUCTO" }) { item ->
-                    // Feedback visual: Si el precio es alto, simulamos 'Featured' de la DB
-                    ArtCard(item.titulo, item.info, item.imagenUrl) {
-                        selectedItem = item
-                        showBottomSheet = true
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // 3. AGENDA & SABER (Basado en upcoming_events y educational_content_view)
-            SeccionLayout("Agenda & Saber", "DESCUBRE Y APRENDE")
-            LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(datosHome.filter { it.categoria == "EVENTO" || it.categoria == "EDUCACION" }) { item ->
-                    ArtCard(
-                        nombre = item.titulo,
-                        etiqueta = if(item.categoria == "EDUCACION") "Nivel: Básico" else "A 1.2 km", // Mejora de Location
-                        urlImagen = item.imagenUrl
-                    ) {
-                        selectedItem = item
-                        showBottomSheet = true
-                    }
-                }
-            }
-        }
-
-        // --- BOTTOM SHEET DE DETALLE ---
-        if (showBottomSheet && selectedItem != null) {
-            ModalBottomSheet(
-                onDismissRequest = { showBottomSheet = false },
-                sheetState = sheetState,
-                containerColor = CardBackground,
-                dragHandle = { BottomSheetDefaults.DragHandle(color = VioletAcento) }
-            ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp).padding(bottom = 48.dp)) {
-                    Text(selectedItem!!.categoria, color = VioletAcento, style = MaterialTheme.typography.labelSmall, letterSpacing = 3.sp)
-                    Text(selectedItem!!.titulo, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
-
-                    // Mejoras basadas en DB
-                    if(selectedItem!!.categoria == "PRODUCTO") {
-                        Text("Disponibilidad: En Stock", color = Color.Green.copy(0.7f), fontSize = 12.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(selectedItem!!.descripcion, color = Color.White.copy(alpha = 0.7f), lineHeight = 24.sp)
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Button(
-                        onClick = { showBottomSheet = false },
-                        modifier = Modifier.fillMaxWidth().height(60.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = VioletAcento),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Text("CONOCER MÁS", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun CarruselPopayan() {
-    val imagenesPopayan = listOf(
-        "https://i.pinimg.com/1200x/17/d6/9f/17d69f8fae014ee87261ecb20a4702c2.jpg",
-        "https://i.pinimg.com/736x/48/b1/9c/48b19cbac47db10be6e71d1fe4849b9a.jpg",
-        "https://i.pinimg.com/736x/a0/40/9d/a0409d3b3de331b2c4c45cb2943db8ec.jpg",
-        "https://i.pinimg.com/1200x/f0/e4/ab/f0e4abce10532cb8fd7943db5ff2bd40.jpg"
-    )
-
-    var currentImageIndex by remember { mutableStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        while(true) {
-            delay(5000)
-            currentImageIndex = (currentImageIndex + 1) % imagenesPopayan.size
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxWidth().height(420.dp)) {
-        AnimatedContent(
-            targetState = currentImageIndex,
-            transitionSpec = { fadeIn(animationSpec = tween(1500)) togetherWith fadeOut(animationSpec = tween(1500)) },
-            label = "FullCarousel"
-        ) { index ->
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imagenesPopayan[index])
-                    .setHeader("User-Agent", "Mozilla/5.0")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+            Text(
+                tag.uppercase(),
+                color         = Violet,
+                fontSize      = 7.sp,
+                fontWeight    = FontWeight.Black,
+                letterSpacing = 1.sp,
+                maxLines      = 1
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                title.ifEmpty { "Sin título" },
+                color      = TextPrimary,
+                fontSize   = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines   = 2,
+                overflow   = TextOverflow.Ellipsis,
+                lineHeight = 15.sp
             )
         }
+    }
+}
 
-        Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)), startY = 600f)))
-
-        Column(modifier = Modifier.align(Alignment.BottomStart).padding(24.dp)) {
-            Text("Arte & Cultura", style = TextStyle(color = Color.White.copy(alpha = 0.7f), fontStyle = FontStyle.Italic, fontSize = 18.sp))
-            Text("POPAYÁN", style = TextStyle(color = Color.White, fontWeight = FontWeight.Black, fontSize = 48.sp, letterSpacing = (-2).sp))
-            Box(modifier = Modifier.width(60.dp).height(4.dp).background(VioletAcento))
+// CompactProductCard — imagen fija, texto fluye libre (sin Box de altura fija)
+@Composable
+private fun CompactProductCard(product: Product, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .width(CARD_PRODUCT_WIDTH)
+            .clip(ShapeCard)
+            .background(BgCard)
+            .clickable(onClick = onClick)
+    ) {
+        SubcomposeAsyncImage(
+            model              = staticImageRequest(product.imageUrl.takeIf { it.isNotBlank() }),
+            contentDescription = product.name,
+            modifier           = Modifier
+                .fillMaxWidth()
+                .height(CARD_PRODUCT_IMAGE_H),
+            contentScale       = ContentScale.Crop,
+            loading = { Box(Modifier.fillMaxSize().background(Color(0xFF16161A))) }
+        )
+        // Zona de texto: sin altura fija, el contenido define el tamaño
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+        ) {
+            Text(
+                product.name,
+                color      = TextPrimary,
+                fontSize   = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines   = 2,
+                overflow   = TextOverflow.Ellipsis,
+                lineHeight = 15.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                product.displayPrice,
+                color      = Violet,
+                fontSize   = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
 
 @Composable
-fun SeccionLayout(titulo: String, subtitulo: String, mostrarVerTodo: Boolean = false) {
-    Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)) {
-        Text(subtitulo, style = TextStyle(color = Color.White.copy(alpha = 0.3f), letterSpacing = 5.sp, fontSize = 10.sp))
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-            Text(titulo, style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
-            if (mostrarVerTodo) {
-                Text(
-                    text = "VER TODO",
-                    color = VioletAcento,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.clickable { /* Aquí irá la navegación a StoreScreen */ }
-                )
+private fun CourseCard(
+    title: String, duration: String, level: String,
+    imageUrl: String?, onClick: () -> Unit
+) {
+    Row(
+        modifier              = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 64.dp)  // mínimo pero puede crecer
+            .clip(ShapeCard)
+            .background(BgCard)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        SubcomposeAsyncImage(
+            model              = editableImageRequest(imageUrl),
+            contentDescription = null,
+            modifier           = Modifier
+                .size(CARD_COURSE_IMAGE)
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale       = ContentScale.Crop,
+            loading = { Box(Modifier.fillMaxSize().background(Color(0xFF16161A))) }
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title.ifEmpty { "Sin título" },
+                color      = TextPrimary,
+                fontSize   = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines   = 2,
+                overflow   = TextOverflow.Ellipsis,
+                lineHeight = 16.sp
+            )
+            Spacer(Modifier.height(5.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                listOf(duration, level).forEach { chip ->
+                    Text(
+                        chip.ifEmpty { "-" },
+                        color    = TextSecondary,
+                        fontSize = 9.sp,
+                        modifier = Modifier
+                            .clip(ShapeChip)
+                            .background(Color(0xFF1E1E2A))
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun ArtistAvatar(
+    name: String, location: String, imageUrl: String?,
+    initials: String, onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier            = Modifier
+            .width(AVATAR_SIZE + 14.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier         = Modifier
+                .size(AVATAR_SIZE)
+                .clip(ShapeAvatar)
+                .background(Brush.linearGradient(listOf(Violet, VioletDark)))
+                .padding(2.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier         = Modifier
+                    .fillMaxSize()
+                    .clip(ShapeAvatar)
+                    .background(Color(0xFF1A0A2E)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (imageUrl != null) {
+                    SubcomposeAsyncImage(
+                        model              = editableImageRequest(imageUrl),
+                        contentDescription = name,
+                        modifier           = Modifier.fillMaxSize().clip(ShapeAvatar),
+                        contentScale       = ContentScale.Crop
+                    )
+                } else {
+                    Text(initials.ifEmpty { "??" }, color = Violet, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            name.ifEmpty { "Artista" },
+            color      = TextPrimary,
+            fontSize   = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines   = 1,
+            overflow   = TextOverflow.Ellipsis,
+            modifier   = Modifier.fillMaxWidth()
+        )
+        Text(
+            location.ifEmpty { "Popayán" },
+            color    = TextSecondary,
+            fontSize = 9.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
